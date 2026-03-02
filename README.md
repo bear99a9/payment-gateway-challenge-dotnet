@@ -22,7 +22,7 @@ Feel free to change the structure of the solution, use a different test library 
 
 ## Design and assumptions
 
-- **Response shape:** The same DTO (`PostPaymentResponse`) is used for both POST (process payment) and GET (retrieve payment). The requirements list the same fields for both; reusing one type keeps the API simple.
+- **Response shape:** The same DTO (`PaymentResponse`) is used for both POST (process payment) and GET (retrieve payment). The requirements list the same fields for both; reusing one type keeps the API simple.
 
 - **Rejected vs Authorized/Declined:** When request validation fails, the API returns **400 Bad Request** with validation errors so the merchant can treat that as “Rejected” (invalid data, no call to the bank). The requirements say responses from the gateway should be Authorized, Declined, or Rejected; 400 + error details satisfies Rejected. Only **Authorized** and **Declined** are returned in the response body, as the spec states “Status must be one of … Authorized, Declined” for payments that reached the bank.
 
