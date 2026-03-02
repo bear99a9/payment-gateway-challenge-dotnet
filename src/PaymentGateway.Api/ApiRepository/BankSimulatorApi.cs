@@ -8,7 +8,7 @@ using RestSharp;
 
 namespace PaymentGateway.Api.ApiRepository;
 
-public class BankSimulatorApi
+public class BankSimulatorApi : IBankSimulatorApi
 {
     private readonly RestClient _restClient;
     private readonly ILogger<BankSimulatorApi> _logger;

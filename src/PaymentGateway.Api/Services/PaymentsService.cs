@@ -14,9 +14,9 @@ public class PaymentsService
 {
     private readonly ILogger<PaymentsService> _logger;
     private readonly IPaymentsRepository _paymentsRepository;
-    private readonly BankSimulatorApi _bankSimulatorApi;
+    private readonly IBankSimulatorApi _bankSimulatorApi;
 
-    public PaymentsService(ILogger<PaymentsService> logger, IPaymentsRepository paymentsRepository, BankSimulatorApi bankSimulatorApi)
+    public PaymentsService(ILogger<PaymentsService> logger, IPaymentsRepository paymentsRepository, IBankSimulatorApi bankSimulatorApi)
     {
         _logger = logger;
         _paymentsRepository = paymentsRepository;
@@ -52,7 +52,7 @@ public class PaymentsService
                     Id = Guid.NewGuid(),
                     Amount = request.Amount,
                     Currency = request.Currency,
-                    CardNumberLastFour = int.Parse(request.CardNumber[^4..]),
+                    CardNumberLastFour = request.CardNumber[^4..],
                     ExpiryMonth = request.ExpiryMonth,
                     ExpiryYear = request.ExpiryYear,
                     Status = success.Authorized ? PaymentStatus.Authorized : PaymentStatus.Declined
