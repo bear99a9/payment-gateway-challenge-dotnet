@@ -10,29 +10,20 @@ namespace PaymentGateway.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class PaymentsController : Controller
+public class PaymentsController(PaymentsService paymentsService, IValidator<PostPaymentRequest> validator) : Controller
 {
-    private readonly PaymentsService _paymentsService;
-    private readonly IValidator<PostPaymentRequest> _validator;
-
-    public PaymentsController(PaymentsService paymentsService, IValidator<PostPaymentRequest> validator)
-    {
-        _paymentsService = paymentsService;
-        _validator = validator;
-    }
-
     [HttpPost]
-    public async Task<ActionResult<PostPaymentResponse>> ProcessPaymentAsync([FromBody] PostPaymentRequest request)
+    public async Task<ActionResult<PaymentResponse>> ProcessPaymentAsync([FromBody] PostPaymentRequest request)
     {
-        var validationResult = await _validator.ValidateAsync(request);
+        var validationResult = await validator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
             return BadRequest(validationResult.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }));
         }
 
-        var result = await _paymentsService.ProcessPayment(request);
+        var result = await paymentsService.ProcessPayment(request);
 
-        return result.Match<ActionResult<PostPaymentResponse>>(
+        return result.Match<ActionResult<PaymentResponse>>(
             payment => Ok(payment),
             statusCode => statusCode switch
             {
@@ -41,9 +32,9 @@ public class PaymentsController : Controller
     }
 
     [HttpGet("{id:guid}")]
-    public ActionResult<PostPaymentResponse> GetPaymentAsync(Guid id)
+    public ActionResult<PaymentResponse> GetPaymentAsync(Guid id)
     {
-        var payment = _paymentsService.GetPayment(id);
+        var payment = paymentsService.GetPayment(id);
 
         if (payment is null)
         {

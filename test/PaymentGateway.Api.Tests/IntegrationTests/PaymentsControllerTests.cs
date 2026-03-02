@@ -64,7 +64,7 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
 
         // Act
         var response = await client.GetAsync($"{endpoint}{payment.Id}");
-        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(JsonOptions);
+        var paymentResponse = await response.Content.ReadFromJsonAsync<PaymentResponse>(JsonOptions);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -104,7 +104,7 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payment = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(JsonOptions);
+        var payment = await response.Content.ReadFromJsonAsync<PaymentResponse>(JsonOptions);
         Assert.NotNull(payment);
         Assert.Equal(PaymentStatus.Authorized, payment!.Status);
         Assert.Equal("3457", payment.CardNumberLastFour);
@@ -113,7 +113,7 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
 
         var getResponse = await client.GetAsync($"{endpoint}{payment.Id}");
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
-        var retrieved = await getResponse.Content.ReadFromJsonAsync<PostPaymentResponse>(JsonOptions);
+        var retrieved = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(JsonOptions);
         Assert.NotNull(retrieved);
         Assert.Equal(payment.Id, retrieved!.Id);
         Assert.Equal(PaymentStatus.Authorized, retrieved.Status);
@@ -128,7 +128,7 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
         var response = await client.PostAsJsonAsync(endpoint, request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payment = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(JsonOptions);
+        var payment = await response.Content.ReadFromJsonAsync<PaymentResponse>(JsonOptions);
         Assert.NotNull(payment);
         Assert.Equal(PaymentStatus.Declined, payment!.Status);
         Assert.Equal("8878", payment.CardNumberLastFour);

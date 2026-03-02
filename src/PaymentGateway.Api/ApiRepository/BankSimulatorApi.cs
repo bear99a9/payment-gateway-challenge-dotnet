@@ -8,27 +8,18 @@ using RestSharp;
 
 namespace PaymentGateway.Api.ApiRepository;
 
-public class BankSimulatorApi : IBankSimulatorApi
+public class BankSimulatorApi(RestClient restClient, ILogger<BankSimulatorApi> logger) : IBankSimulatorApi
 {
-    private readonly RestClient _restClient;
-    private readonly ILogger<BankSimulatorApi> _logger;
-
-    public BankSimulatorApi(RestClient restClient, ILogger<BankSimulatorApi> logger)
-    {
-        _restClient = restClient;
-        _logger = logger;
-    }
-
     public async Task<OneOf<BankSimulatorPaymentResponse, PaymentStatus>> ProcessPayment(BankSimulatorPaymentRequest request)
     {
         try
         {
-            _logger.LogInformation("Processing payment with Bank Simulator API: {Request}", JsonSerializer.Serialize(request));
+            logger.LogInformation("Processing payment with Bank Simulator API: {Request}", JsonSerializer.Serialize(request));
 
             var restRequest = new RestRequest("payments")
                 .AddJsonBody(request);
 
-            var response = await _restClient.ExecutePostAsync<BankSimulatorPaymentResponse>(restRequest);
+            var response = await restClient.ExecutePostAsync<BankSimulatorPaymentResponse>(restRequest);
 
             if (response.IsSuccessful && response.Data is not null)
             {
@@ -40,7 +31,7 @@ public class BankSimulatorApi : IBankSimulatorApi
                 return PaymentStatus.Rejected;
             }
 
-            _logger.LogError("Bank Simulator API returned unexpected HTTP status {StatusCode}", response.StatusCode);
+            logger.LogError("Bank Simulator API returned unexpected HTTP status {StatusCode}", response.StatusCode);
             throw new HttpRequestException($"Bank Simulator API returned {(int)response.StatusCode} {response.StatusCode}.");
         }
         catch (HttpRequestException)
@@ -49,7 +40,7 @@ public class BankSimulatorApi : IBankSimulatorApi
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to process payment with Bank Simulator API: {Request}", JsonSerializer.Serialize(request));
+            logger.LogError(ex, "Failed to process payment with Bank Simulator API: {Request}", JsonSerializer.Serialize(request));
             throw;
         }
     }
