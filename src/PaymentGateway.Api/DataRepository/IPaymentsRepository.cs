@@ -1,9 +1,9 @@
-using PaymentGateway.Api.Models.Responses;
+using PaymentGateway.Api.Models;
 
 namespace PaymentGateway.Api.DataRepository;
 
 public interface IPaymentsRepository
 {
-    void Add(PostPaymentResponse payment);
-    PostPaymentResponse? Get(Guid id);
+    void Add(Payment payment);
+    Payment? Get(Guid id);
 }

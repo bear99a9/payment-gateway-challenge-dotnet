@@ -1,11 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 using PaymentGateway.Api.DataRepository;
 using PaymentGateway.Api.Enums;
+using PaymentGateway.Api.Models;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 
@@ -18,6 +20,12 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
     private const string endpoint = "/api/Payments/";
     private readonly WebApplicationFactory<Program> _factory;
     private readonly Fixture _fixture = new();
+
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public PaymentsControllerTests(WebApplicationFactory<Program> factory)
     {
@@ -44,7 +52,7 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
     public async Task RetrievesAPaymentSuccessfully()
     {
         // Arrange
-        var payment = _fixture.Create<PostPaymentResponse>();
+        var payment = _fixture.Create<Payment>();
 
         var paymentsRepository = new PaymentsRepository();
         paymentsRepository.Add(payment);
@@ -56,14 +64,14 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
 
         // Act
         var response = await client.GetAsync($"{endpoint}{payment.Id}");
-        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>();
+        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(JsonOptions);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(paymentResponse);
         Assert.Equal(payment.Id, paymentResponse!.Id);
         Assert.Equal(payment.Status, paymentResponse.Status);
-        Assert.Equal(payment.CardNumberLastFour, paymentResponse.CardNumberLastFour);
+        Assert.Equal(payment.LastFourCardDigits, paymentResponse.CardNumberLastFour);
         Assert.Equal(payment.ExpiryMonth, paymentResponse.ExpiryMonth);
         Assert.Equal(payment.ExpiryYear, paymentResponse.ExpiryYear);
         Assert.Equal(payment.Currency, paymentResponse.Currency);
@@ -96,7 +104,7 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payment = await response.Content.ReadFromJsonAsync<PostPaymentResponse>();
+        var payment = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(JsonOptions);
         Assert.NotNull(payment);
         Assert.Equal(PaymentStatus.Authorized, payment!.Status);
         Assert.Equal("3457", payment.CardNumberLastFour);
@@ -105,7 +113,7 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
 
         var getResponse = await client.GetAsync($"{endpoint}{payment.Id}");
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
-        var retrieved = await getResponse.Content.ReadFromJsonAsync<PostPaymentResponse>();
+        var retrieved = await getResponse.Content.ReadFromJsonAsync<PostPaymentResponse>(JsonOptions);
         Assert.NotNull(retrieved);
         Assert.Equal(payment.Id, retrieved!.Id);
         Assert.Equal(PaymentStatus.Authorized, retrieved.Status);
@@ -120,7 +128,7 @@ public class PaymentsControllerTests : IClassFixture<WebApplicationFactory<Progr
         var response = await client.PostAsJsonAsync(endpoint, request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payment = await response.Content.ReadFromJsonAsync<PostPaymentResponse>();
+        var payment = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(JsonOptions);
         Assert.NotNull(payment);
         Assert.Equal(PaymentStatus.Declined, payment!.Status);
         Assert.Equal("8878", payment.CardNumberLastFour);

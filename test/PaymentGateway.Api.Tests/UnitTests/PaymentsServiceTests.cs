@@ -11,6 +11,7 @@ using OneOf;
 using PaymentGateway.Api.ApiRepository;
 using PaymentGateway.Api.DataRepository;
 using PaymentGateway.Api.Enums;
+using PaymentGateway.Api.Models;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
@@ -38,7 +39,7 @@ public class PaymentsServiceTests
     public void GetPayment_WhenPaymentExists_ReturnsPayment()
     {
         // Arrange
-        var payment = _fixture.Create<PostPaymentResponse>();
+        var payment = _fixture.Create<Payment>();
 
         _paymentRepository.Get(payment.Id).Returns(payment);
 
@@ -49,7 +50,7 @@ public class PaymentsServiceTests
         Assert.NotNull(result);
         Assert.Equal(payment.Id, result!.Id);
         Assert.Equal(payment.Status, result.Status);
-        Assert.Equal(payment.CardNumberLastFour, result.CardNumberLastFour);
+        Assert.Equal(payment.LastFourCardDigits, result.CardNumberLastFour);
         Assert.Equal(payment.ExpiryMonth, result.ExpiryMonth);
         Assert.Equal(payment.ExpiryYear, result.ExpiryYear);
         Assert.Equal(payment.Currency, result.Currency);
@@ -57,10 +58,11 @@ public class PaymentsServiceTests
     }
 
     [Fact]
-    public void GetPayment_WhenPaymentDoesNotExist_ReturnsNotFound(){
+    public void GetPayment_WhenPaymentDoesNotExist_ReturnsNotFound()
+    {
         // Arrange
         var paymentId = Guid.NewGuid();
-        _paymentRepository.Get(paymentId).Returns((PostPaymentResponse?)null);
+        _paymentRepository.Get(paymentId).Returns((Payment?)null);
 
         // Act
         var result = _sut.GetPayment(paymentId);
@@ -98,10 +100,14 @@ public class PaymentsServiceTests
         Assert.Equal("3456", payment.CardNumberLastFour);
         Assert.Equal(request.ExpiryMonth, payment.ExpiryMonth);
         Assert.Equal(request.ExpiryYear, payment.ExpiryYear);
-        _paymentRepository.Received(1).Add(Arg.Is<PostPaymentResponse>(p =>
+        _paymentRepository.Received(1).Add(Arg.Is<Payment>(p =>
             p.Status == PaymentStatus.Authorized &&
-            p.CardNumberLastFour == "3456" &&
-            p.Amount == request.Amount));
+            p.LastFourCardDigits == "3456" &&
+            p.Amount == request.Amount &&
+            p.Currency == request.Currency &&
+            p.ExpiryMonth == request.ExpiryMonth &&
+            p.ExpiryYear == request.ExpiryYear &&
+            p.AuthorizationCode == "auth-123"));
     }
 
     [Fact]
@@ -129,7 +135,13 @@ public class PaymentsServiceTests
         var payment = result.AsT0;
         Assert.Equal(PaymentStatus.Declined, payment.Status);
         Assert.Equal("8878", payment.CardNumberLastFour);
-        _paymentRepository.Received(1).Add(Arg.Is<PostPaymentResponse>(p => p.Status == PaymentStatus.Declined));
+        _paymentRepository.Received(1).Add(Arg.Is<Payment>(p => p.Status == PaymentStatus.Declined &&
+            p.LastFourCardDigits == "8878" &&
+            p.Amount == request.Amount &&
+            p.Currency == request.Currency &&
+            p.ExpiryMonth == request.ExpiryMonth &&
+            p.ExpiryYear == request.ExpiryYear &&
+            p.AuthorizationCode == ""));
     }
 
     [Fact]
@@ -154,7 +166,7 @@ public class PaymentsServiceTests
         // Assert
         Assert.True(result.IsT1);
         Assert.Equal(HttpStatusCode.BadGateway, result.AsT1);
-        _paymentRepository.DidNotReceive().Add(Arg.Any<PostPaymentResponse>());
+        _paymentRepository.DidNotReceive().Add(Arg.Any<Payment>());
     }
 
     [Fact]
