@@ -22,7 +22,7 @@ public class PostPaymentRequestValidator : AbstractValidator<PostPaymentRequest>
             .GreaterThan(0).WithMessage("Expiry year is required.");
 
         RuleFor(x => x)
-            .Must(BeExpiryInTheFuture)
+            .Must(IsExpiryInTheFuture)
             .WithMessage("Expiry date must be in the future.")
             .When(x => x.ExpiryMonth >= 1 && x.ExpiryMonth <= 12 && x.ExpiryYear > 0);
 
@@ -41,7 +41,7 @@ public class PostPaymentRequestValidator : AbstractValidator<PostPaymentRequest>
             .Matches("^[0-9]+$").WithMessage("CVV must contain only numeric characters.");
     }
 
-    private static bool BeExpiryInTheFuture(PostPaymentRequest request)
+    private static bool IsExpiryInTheFuture(PostPaymentRequest request)
     {
         var lastDayOfExpiry = new DateTime(request.ExpiryYear, request.ExpiryMonth, DateTime.DaysInMonth(request.ExpiryYear, request.ExpiryMonth));
         return lastDayOfExpiry >= DateTime.UtcNow.Date;

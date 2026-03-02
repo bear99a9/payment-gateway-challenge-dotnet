@@ -45,7 +45,7 @@ public class PostPaymentRequestValidatorTests
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.CardNumber));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.CardNumber) && e.ErrorMessage == "Card number is required.");
     }
 
     [Theory]
@@ -62,14 +62,16 @@ public class PostPaymentRequestValidatorTests
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.CardNumber) && e.ErrorMessage.Contains("14 and 19"));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.CardNumber) && e.ErrorMessage == "Card number must be between 14 and 19 characters.");
     }
 
     [Theory]
-    [InlineData("12345678901234")]   // 14 - valid
+    [InlineData("12345678901234")]   // 14 
     [InlineData("123456789012345")]  // 15
     [InlineData("1234567890123456")] // 16
-    [InlineData("1234567890123456789")] // 19 - valid
+    [InlineData("12345678901234561")] // 17
+    [InlineData("123456789012345623")] // 18
+    [InlineData("1234567890123456789")] // 19
     public void Validate_WhenCardNumberValidLength_PassesLengthRule(string cardNumber)
     {
         // Arrange
@@ -80,7 +82,7 @@ public class PostPaymentRequestValidatorTests
         var result = _sut.Validate(request);
 
         // Assert
-        Assert.DoesNotContain(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.CardNumber) && e.ErrorMessage.Contains("14 and 19"));
+        Assert.DoesNotContain(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.CardNumber) && e.ErrorMessage == "Card number must be between 14 and 19 characters.");
     }
 
     [Theory]
@@ -98,7 +100,7 @@ public class PostPaymentRequestValidatorTests
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.CardNumber) && e.ErrorMessage.Contains("numeric"));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.CardNumber) && e.ErrorMessage == "Card number must contain only numeric characters.");
     }
 
     [Theory]
@@ -115,7 +117,7 @@ public class PostPaymentRequestValidatorTests
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.ExpiryMonth));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.ExpiryMonth) && e.ErrorMessage == "Expiry month must be between 1 and 12.");
     }
 
     [Theory]
@@ -164,11 +166,11 @@ public class PostPaymentRequestValidatorTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("AB")]
-    [InlineData("ABCD")]
-    public void Validate_WhenCurrencyInvalid_ReturnsError(string? currency)
+    [InlineData(null, "Currency is required.")]
+    [InlineData("", "Currency is required.")]
+    [InlineData("AB", "Currency must be 3 characters.")]
+    [InlineData("ABCD", "Currency must be one of the supported ISO codes (e.g. GBP, USD, EUR).")]
+    public void Validate_WhenCurrencyInvalid_ReturnsError(string? currency, string expectedMessage)
     {
         // Arrange
         var request = ValidRequest();
@@ -179,7 +181,7 @@ public class PostPaymentRequestValidatorTests
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Currency));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Currency) && e.ErrorMessage == expectedMessage);
     }
 
     [Theory]
@@ -197,7 +199,7 @@ public class PostPaymentRequestValidatorTests
         var result = _sut.Validate(request);
 
         // Assert
-        Assert.DoesNotContain(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Currency) && e.ErrorMessage.Contains("supported"));
+        Assert.DoesNotContain(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Currency) && e.ErrorMessage == "Currency must be one of the supported ISO codes (e.g. GBP, USD, EUR).");
     }
 
     [Theory]
@@ -205,11 +207,16 @@ public class PostPaymentRequestValidatorTests
     [InlineData(-1)]
     public void Validate_WhenAmountNotPositive_ReturnsError(int amount)
     {
+        // Arrange
         var request = ValidRequest();
         request.Amount = amount;
+
+        // Act
         var result = _sut.Validate(request);
+
+        // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Amount));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Amount) && e.ErrorMessage == "Amount must be a positive integer.");
     }
 
     [Theory]
@@ -244,7 +251,7 @@ public class PostPaymentRequestValidatorTests
         var result = _sut.Validate(request);
 
         // Assert
-        Assert.DoesNotContain(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Cvv) && e.ErrorMessage.Contains("3 or 4"));
+        Assert.DoesNotContain(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Cvv) && e.ErrorMessage == "CVV must be 3 or 4 characters.");
     }
 
     [Theory]
@@ -261,6 +268,6 @@ public class PostPaymentRequestValidatorTests
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Cvv) && e.ErrorMessage.Contains("numeric"));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(PostPaymentRequest.Cvv) && e.ErrorMessage == "CVV must contain only numeric characters.");
     }
 }
