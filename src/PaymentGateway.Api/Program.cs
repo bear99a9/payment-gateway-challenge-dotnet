@@ -1,4 +1,11 @@
+using Microsoft.Extensions.Options;
+
+using PaymentGateway.Api.ApiRepository;
+using PaymentGateway.Api.DataRepository;
+using PaymentGateway.Api.Models;
 using PaymentGateway.Api.Services;
+
+using RestSharp;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +16,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<PaymentsRepository>();
+builder.Services.Configure<ApiOptions>(
+    builder.Configuration.GetSection(ApiOptions.SectionName));
+
+builder.Services.AddSingleton<IPaymentsRepository, PaymentsRepository>();
+builder.Services.AddSingleton<PaymentsService>();
+builder.Services.AddSingleton<BankSimulatorApi>();
+
+builder.Services.AddSingleton<RestClient>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
+    return new RestClient(new RestClientOptions(options.BaseUrl));
+});
 
 var app = builder.Build();
 
