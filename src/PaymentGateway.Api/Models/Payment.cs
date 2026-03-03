@@ -15,9 +15,9 @@ namespace PaymentGateway.Api.Models
         public string AuthorizationCode { get; set; } = string.Empty;
 
         /// <summary>Maps to API response (excludes AuthorizationCode for PCI).</summary>
-        public PostPaymentResponse ToPostPaymentResponse()
+        public PaymentResponse ToPostPaymentResponse()
         {
-            return new PostPaymentResponse
+            return new PaymentResponse
             {
                 Id = Id,
                 Status = Status,
