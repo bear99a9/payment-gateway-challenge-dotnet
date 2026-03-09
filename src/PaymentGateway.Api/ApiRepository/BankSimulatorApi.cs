@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using OneOf;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
@@ -12,9 +11,10 @@ public class BankSimulatorApi(RestClient restClient, ILogger<BankSimulatorApi> l
 {
     public async Task<OneOf<BankSimulatorPaymentResponse, PaymentStatus>> ProcessPayment(BankSimulatorPaymentRequest request)
     {
+        var cardLastFour = request.CardNumber.Length >= 4 ? request.CardNumber[^4..] : "****";
         try
         {
-            logger.LogInformation("Processing payment with Bank Simulator API: {Request}", JsonSerializer.Serialize(request));
+            logger.LogInformation("Processing payment with Bank Simulator API: Amount={Amount} {Currency}, card ending {CardLastFour}", request.Amount, request.Currency, cardLastFour);
 
             var restRequest = new RestRequest("payments")
                 .AddJsonBody(request);
@@ -40,7 +40,7 @@ public class BankSimulatorApi(RestClient restClient, ILogger<BankSimulatorApi> l
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to process payment with Bank Simulator API: {Request}", JsonSerializer.Serialize(request));
+            logger.LogError(ex, "Failed to process payment with Bank Simulator API: Amount={Amount} {Currency}, card ending {CardLastFour}", request.Amount, request.Currency, cardLastFour);
             throw;
         }
     }
